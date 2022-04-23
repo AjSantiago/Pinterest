@@ -3,10 +3,11 @@ const path = require('path');
 const morgan = require('morgan');
 const multer = require('multer');
 const { v4: uuid } = require('uuid');
-const file = require('fs-extra/lib/ensure/file');
+const { format } = require('timeago.js');
 
 // Initializations
 const app = express();
+require('./database');
 
 // Settings
 app.set('port', process.env.PORT || 3000);
@@ -22,14 +23,19 @@ const storage = multer.diskStorage({
 		callback(null, uuid() + path.extname(file.originalname));
 	},
 });
-app.use(multer({ storage: storage }).single('image'));
+app.use(multer({ storage }).single('image'));
 
 // Global variables
+app.use((req, res, next) => {
+	app.locals.format = format;
+	next();
+});
 
 // Routes
 app.use(require('./routes/index'));
 
 // Static files
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Start server
 app.listen(app.get('port'), () => {
